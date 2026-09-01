@@ -1,0 +1,364 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPPt きのみタイマー</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #f0fdf4; color: #1f2937; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+<div class="max-w-4xl mx-auto space-y-6">
+    <header class="bg-white p-6 rounded-2xl shadow-sm border border-green-100 flex items-center gap-4">
+        <div class="text-green-600 text-4xl">🌱</div>
+        <div>
+            <h1 class="text-2xl font-bold text-green-800">DPPt きのみタイマー</h1>
+            <p class="text-sm text-gray-500">MacroDroid連携・バックアップ対応版</p>
+        </div>
+    </header>
+
+    <div class="flex space-x-2 bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+        <button onclick="switchTab('main')" id="tab-main" class="flex-1 py-2 font-bold rounded-lg bg-green-100 text-green-700">タイマー管理</button>
+        <button onclick="switchTab('settings')" id="tab-settings" class="flex-1 py-2 font-bold rounded-lg text-gray-500 hover:bg-gray-50">設定 / データ</button>
+    </div>
+
+    <div id="content-main" class="tab-content active grid md:grid-cols-3 gap-6">
+        <div class="md:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-green-100 h-fit">
+            <h2 class="text-lg font-bold text-gray-700 mb-4">🍃 きのみを植える</h2>
+            <div id="berry-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">植える場所</label>
+                    <select id="location-select" class="w-full p-2 border border-gray-200 rounded-lg bg-gray-50"></select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">種類</label>
+                    <select id="berry-select" class="w-full p-2 border border-gray-200 rounded-lg bg-gray-50"></select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">植えた日時</label>
+                    <input type="datetime-local" id="planted-time" class="w-full p-2 border border-gray-200 rounded-lg bg-gray-50">
+                </div>
+                <div class="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                    <input type="checkbox" id="use-sukusuku" class="w-4 h-4 text-green-600">
+                    <label for="use-sukusuku" class="text-sm font-medium text-blue-900 cursor-pointer">すくすくこやしを使用 (-25%)</label>
+                </div>
+                <button type="button" id="submit-btn" class="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-colors shadow-sm">
+                    記録して通知をセット
+                </button>
+            </div>
+        </div>
+
+        <div class="md:col-span-2 space-y-4">
+            <h2 class="text-lg font-bold text-gray-700" id="list-count">管理中のきのみ (0)</h2>
+            <div id="berry-list" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <div id="content-settings" class="tab-content bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-8">
+        <section class="space-y-4 border-b pb-6">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">🔗 MacroDroid連携設定</h2>
+            <p class="text-sm text-gray-600">MacroDroidで発行したWebhook URLを入力してください。</p>
+            <input type="url" id="webhook-url" placeholder="https://trigger.macrodroid.com/..." class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-400 outline-none">
+            <button onclick="saveWebhook()" class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700">URLを保存</button>
+            <p id="webhook-status" class="text-sm text-green-600 font-bold hidden">保存しました！</p>
+        </section>
+
+        <section class="space-y-4 border-b pb-6">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">💾 データのバックアップ</h2>
+            <div class="flex gap-4">
+                <button onclick="exportData()" class="px-6 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700">ファイルに保存(書き出し)</button>
+            </div>
+        </section>
+
+        <section class="space-y-4">
+            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">📂 データの復元</h2>
+            <input type="file" id="file-input" accept=".json" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+            <button onclick="importData()" class="px-6 py-2 bg-gray-800 text-white font-bold rounded-lg hover:bg-gray-900">ファイルから復元</button>
+        </section>
+    </div>
+</div>
+
+<script>
+    const LOCATIONS = [
+        { name: "ソノオタウン (フラワーショップ左)", max: 4 }, { name: "205番道路 南 (谷間の発電所分岐手前)", max: 2 },
+        { name: "205番道路 中央 (タタラせいてつじょ側)", max: 2 }, { name: "205番道路 北 (ハクタイの森出口付近)", max: 4 },
+        { name: "タタラせいてつじょ (建物前広場)", max: 4 }, { name: "206番道路 南 (サイクリングロード下右側)", max: 2 },
+        { name: "206番道路 北 (まよいのどうくつ方面)", max: 2 }, { name: "207番道路 (クロガネ側段差下)", max: 4 },
+        { name: "208番道路 (きのみマスターの家前)", max: 4 }, { name: "209番道路 南西 (ヨスガ東出口木橋先)", max: 2 },
+        { name: "209番道路 北東 (ロストタワー北側段差)", max: 2 }, { name: "ズイタウン (育て屋・ショップ東側)", max: 4 },
+        { name: "210番道路 南 (カフェやまごや手前)", max: 4 }, { name: "210番道路 北 (きりばらいエリア段差途中)", max: 4 },
+        { name: "211番道路 西 (ハクタイ東側テンガン山手前)", max: 2 }, { name: "211番道路 東 (カンナギ西側広場)", max: 2 },
+        { name: "215番道路 西 (210番合流付近高台)", max: 2 }, { name: "215番道路 東 (トバリ西ゲート木橋手前)", max: 2 },
+        { name: "214番道路 (トバリ南ゲート草むら横)", max: 4 }, { name: "213番道路 (レストラン「なみのま」付近)", max: 4 },
+        { name: "212番道路 北 (ポケモン屋敷正門左手前)", max: 4 }, { name: "212番道路 北東 (ポケモン屋敷池の奥)", max: 2 },
+        { name: "212番道路 南東 (ノモセ西ゲート泥沼手前)", max: 4 }, { name: "218番道路 (ミオ東ゲート陸地)", max: 4 },
+        { name: "216番道路 (テンガン山北側出口雪原)", max: 2 }, { name: "221番道路 (パルパーク入口手前)", max: 4 },
+        { name: "222番道路 西 (砂浜へ降りる前の北側高台)", max: 2 }, { name: "222番道路 東 (ナギサ西ゲート民家横)", max: 4 },
+        { name: "225番道路 (ファイトエリア北側民家付近)", max: 4 }, { name: "228番道路 (砂嵐エリアのオアシス周辺)", max: 4 },
+        { name: "229番道路 (リゾートエリア東側二股草むら)", max: 4 }
+    ];
+    const BERRY_GROUPS = [
+        { label: "8時間 (水やり 2時間毎)", hours: 8, berries: ["ズリ", "ブリー", "ナナ", "セシナ", "パイル"] },
+        { label: "12時間 (水やり 3時間毎)", hours: 12, berries: ["クラボ", "カゴ", "モモン", "チーゴ", "ナナシ"] },
+        { label: "16時間 (水やり 4時間毎)", hours: 16, berries: ["ヒメリ", "オレン", "キー"] },
+        { label: "20時間 (水やり 5時間毎)", hours: 20, berries: ["フィラ", "ウイ", "マゴ", "バンジ", "イア"] },
+        { label: "24時間 (水やり 6時間毎)", hours: 24, berries: ["モコシ", "ゴス", "ラボタ", "ノメル"] },
+        { label: "32時間 (水やり 8時間毎)", hours: 32, berries: ["オボン", "ザロク", "ネコブ", "タポル", "ロメ", "ウブ", "マトマ"] },
+        { label: "48時間 (水やり 12時間毎)", hours: 48, berries: ["ラム"] },
+        { label: "60時間 (水やり 15時間毎)", hours: 60, berries: ["ノワキ", "シーヤ", "カイス", "ドリ", "ベリブ"] },
+        { label: "72時間 (水やり 18時間毎)", hours: 72, berries: ["オッカ", "イトケ", "ソクノ", "リンド", "ヤチェ", "ヨプ", "ビアー", "シュカ", "バコウ", "ウタン", "タンガ", "ヨロギ", "カシブ", "ハバン", "ナモ", "リリバ", "ホズ"] },
+        { label: "96時間 (水やり 24時間毎)", hours: 96, berries: ["チイラ", "リュガ", "カムラ", "ヤタピ", "ズア", "サン", "スター", "ナゾ", "ミクル", "イバン", "ジャポ", "レンブ"] }
+    ];
+
+    let berries = [];
+    let webhookUrl = "";
+
+    function loadData() {
+        try {
+            berries = JSON.parse(localStorage.getItem('dppt_berries')) || [];
+            webhookUrl = localStorage.getItem('dppt_webhook') || "";
+        } catch (e) {
+            berries = [];
+            webhookUrl = "";
+        }
+    }
+
+    function saveData() {
+        try {
+            localStorage.setItem('dppt_berries', JSON.stringify(berries));
+            localStorage.setItem('dppt_webhook', webhookUrl);
+        } catch (e) {
+            console.warn("データ保存エラー", e);
+        }
+    }
+
+    window.onload = () => {
+        loadData();
+        document.getElementById('webhook-url').value = webhookUrl;
+        setInitialTime();
+        renderSelects();
+        renderList();
+    };
+
+    function setInitialTime() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('planted-time').value = now.toISOString().slice(0, 16);
+    }
+
+    function renderSelects() {
+        const locSelect = document.getElementById('location-select');
+        locSelect.innerHTML = '';
+        LOCATIONS.forEach(loc => {
+            const currentCount = berries.filter(b => b.location === loc.name).length;
+            const isFull = currentCount >= loc.max;
+            const opt = document.createElement('option');
+            opt.value = loc.name;
+            opt.textContent = `${loc.name} ${isFull ? "(満杯)" : `(空き: ${loc.max - currentCount}/${loc.max})`}`;
+            opt.disabled = isFull;
+            if(isFull) opt.classList.add('text-gray-400');
+            locSelect.appendChild(opt);
+        });
+
+        const berrySelect = document.getElementById('berry-select');
+        berrySelect.innerHTML = '';
+        BERRY_GROUPS.forEach(group => {
+            const optgroup = document.createElement('optgroup');
+            optgroup.label = group.label;
+            group.berries.forEach(berry => {
+                const opt = document.createElement('option');
+                opt.value = berry;
+                opt.textContent = `${berry}のみ`;
+                optgroup.appendChild(opt);
+            });
+            berrySelect.appendChild(optgroup);
+        });
+    }
+
+    function formatDate(timestamp) {
+        return new Intl.DateTimeFormat('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(timestamp));
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.getElementById(`content-${tabId}`).classList.add('active');
+        document.getElementById('tab-main').className = `flex-1 py-2 font-bold rounded-lg ${tabId === 'main' ? 'bg-green-100 text-green-700' : 'text-gray-500 hover:bg-gray-50'}`;
+        document.getElementById('tab-settings').className = `flex-1 py-2 font-bold rounded-lg ${tabId === 'settings' ? 'bg-green-100 text-green-700' : 'text-gray-500 hover:bg-gray-50'}`;
+    }
+
+    function saveWebhook() {
+        webhookUrl = document.getElementById('webhook-url').value;
+        saveData();
+        const status = document.getElementById('webhook-status');
+        status.classList.remove('hidden');
+        setTimeout(() => status.classList.add('hidden'), 3000);
+    }
+
+    function sendWebhook(berry) {
+        if (!webhookUrl) return;
+        const btn = document.getElementById('submit-btn');
+        btn.textContent = "送信中...";
+        btn.disabled = true;
+
+        const now = Date.now();
+        const stage1_min = Math.round(((berry.plantedAt + (berry.stageHours * 3600000)) - now) / 60000);
+        const stage2_min = Math.round(((berry.plantedAt + (berry.stageHours * 2 * 3600000)) - now) / 60000);
+        const stage3_min = Math.round(((berry.plantedAt + (berry.stageHours * 3 * 3600000)) - now) / 60000);
+        const harvest_min = Math.round(((berry.plantedAt + (berry.totalHours * 3600000)) - now) / 60000);
+        
+        const queryParams = new URLSearchParams({
+            "location": berry.location,
+            "berry": berry.berryName,
+            "t1": stage1_min,
+            "t2": stage2_min,
+            "t3": stage3_min,
+            "th": harvest_min
+        });
+
+        // 完全に安全な通信方法（画像読み込みへの偽装）に変更しました
+        const beacon = new Image();
+        beacon.src = `${webhookUrl}?${queryParams.toString()}`;
+
+        setTimeout(() => {
+            btn.textContent = "記録して通知をセット";
+            btn.disabled = false;
+        }, 1000);
+    }
+
+    document.getElementById('submit-btn').addEventListener('click', () => {
+        const timeInputRaw = document.getElementById('planted-time').value;
+        if (!timeInputRaw) {
+            alert("植えた日時を入力してください。");
+            return;
+        }
+
+        const loc = document.getElementById('location-select').value;
+        const berryName = document.getElementById('berry-select').value;
+        const timeInput = new Date(timeInputRaw).getTime();
+        const useSukusuku = document.getElementById('use-sukusuku').checked;
+
+        let selectedGroup = null;
+        for (const g of BERRY_GROUPS) {
+            if (g.berries.includes(berryName)) selectedGroup = g;
+        }
+
+        const totalHours = useSukusuku ? selectedGroup.hours * 0.75 : selectedGroup.hours;
+        
+        const newBerry = {
+            id: Date.now().toString(),
+            location: loc,
+            berryName: berryName,
+            groupLabel: selectedGroup.label,
+            useSukusuku: useSukusuku,
+            plantedAt: timeInput,
+            totalHours: totalHours,
+            stageHours: totalHours / 4
+        };
+
+        berries = [newBerry, ...berries];
+        saveData();
+        
+        if (webhookUrl) sendWebhook(newBerry);
+        else alert("記録しました。\n※設定タブにWebhook URLがないため、通知は送信されません。");
+
+        setInitialTime();
+        renderSelects();
+        renderList();
+    });
+
+    function deleteBerry(id) {
+        if(confirm("このきのみをリストから削除しますか？\n（MacroDroidに送信済みのスケジュールはキャンセルされません）")) {
+            berries = berries.filter(b => b.id !== id);
+            saveData();
+            renderSelects();
+            renderList();
+        }
+    }
+
+    function renderList() {
+        document.getElementById('list-count').textContent = `管理中のきのみ (${berries.length})`;
+        const listEl = document.getElementById('berry-list');
+        listEl.innerHTML = '';
+
+        if(berries.length === 0) {
+            listEl.innerHTML = `<div class="bg-white p-8 rounded-2xl border border-dashed border-gray-300 text-center text-gray-500">左のフォームから記録してください。</div>`;
+            return;
+        }
+
+        berries.forEach(berry => {
+            const now = Date.now();
+            const stage1 = berry.plantedAt + (berry.stageHours * 3600000);
+            const stage2 = berry.plantedAt + (berry.stageHours * 2 * 3600000);
+            const stage3 = berry.plantedAt + (berry.stageHours * 3 * 3600000);
+            const harvest = berry.plantedAt + (berry.totalHours * 3600000);
+
+            const div = document.createElement('div');
+            div.className = "bg-white p-5 rounded-2xl shadow-sm border border-gray-100";
+            div.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <div class="text-sm text-gray-500 mb-1">📍 ${berry.location}</div>
+                        <h3 class="text-xl font-bold text-gray-800">${berry.berryName}のみ ${berry.useSukusuku ? '<span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium ml-2">すくすく</span>' : ''}</h3>
+                        <p class="text-xs text-gray-400 mt-1">${berry.groupLabel}</p>
+                    </div>
+                    <button onclick="deleteBerry('${berry.id}')" class="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 rounded-lg">🗑 削除</button>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="p-3 rounded-xl border ${now > stage1 ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-100'}">
+                        <div class="text-xs text-gray-500 mb-1">💧 水やり1回目</div>
+                        <div class="font-medium text-sm ${now > stage1 ? 'text-gray-400 line-through' : 'text-blue-900'}">${formatDate(stage1)}</div>
+                    </div>
+                    <div class="p-3 rounded-xl border ${now > stage2 ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-100'}">
+                        <div class="text-xs text-gray-500 mb-1">💧 水やり2回目</div>
+                        <div class="font-medium text-sm ${now > stage2 ? 'text-gray-400 line-through' : 'text-blue-900'}">${formatDate(stage2)}</div>
+                    </div>
+                    <div class="p-3 rounded-xl border ${now > stage3 ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-100'}">
+                        <div class="text-xs text-gray-500 mb-1">💧 水やり3回目</div>
+                        <div class="font-medium text-sm ${now > stage3 ? 'text-gray-400 line-through' : 'text-blue-900'}">${formatDate(stage3)}</div>
+                    </div>
+                    <div class="p-3 rounded-xl border ${now > harvest ? 'bg-green-100 border-green-200' : 'bg-orange-50 border-orange-100'}">
+                        <div class="text-xs text-gray-500 mb-1">✨ 収穫</div>
+                        <div class="font-bold text-sm ${now > harvest ? 'text-green-700' : 'text-orange-800'}">${formatDate(harvest)}</div>
+                    </div>
+                </div>
+            `;
+            listEl.appendChild(div);
+        });
+    }
+
+    function exportData() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(berries));
+        const a = document.createElement('a');
+        a.href = dataStr;
+        a.download = `DPPt_berries_backup_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+    }
+
+    function importData() {
+        const fileInput = document.getElementById('file-input');
+        if (!fileInput.files.length) return alert("ファイルを選択してください。");
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                berries = JSON.parse(e.target.result);
+                saveData();
+                renderSelects();
+                renderList();
+                alert("復元が完了しました！");
+            } catch (err) {
+                alert("ファイルの読み込みに失敗しました。正しいバックアップファイルか確認してください。");
+            }
+        };
+        reader.readAsText(fileInput.files[0]);
+    }
+</script>
+</body>
+</html>
