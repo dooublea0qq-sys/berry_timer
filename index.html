@@ -101,42 +101,43 @@
 </div>
 
 <script>
+    // シンオウ地方のふかふかの土 全35箇所（合計118マス）を完全網羅
     const LOCATIONS = [
-        { name: "ソノオタウン (フラワーショップ左)", max: 4 }, 
-        { name: "ソノオのはなばたけ (あまいミツの木横)", max: 2 },
-        { name: "たにまのはつでんしょ (草むら手前)", max: 2 },
-        { name: "205番道路 南 (谷間の発電所分岐手前)", max: 2 },
-        { name: "205番道路 中央 (タタラせいてつじょ側)", max: 2 }, 
-        { name: "205番道路 北 (ハクタイの森出口付近)", max: 4 },
-        { name: "タタラせいてつじょ (建物前広場)", max: 4 }, 
-        { name: "206番道路 南 (サイクリングロード下右側)", max: 2 },
-        { name: "206番道路 北 (まよいのどうくつ方面)", max: 2 }, 
-        { name: "207番道路 (クロガネ側段差下)", max: 4 },
-        { name: "208番道路 (きのみマスターの家前)", max: 4 }, 
-        { name: "209番道路 南西 (ヨスガ東出口木橋先)", max: 2 },
-        { name: "209番道路 北東 (ロストタワー北側段差)", max: 2 }, 
-        { name: "ズイタウン (育て屋・ショップ東側)", max: 4 },
-        { name: "210番道路 南 (カフェやまごや手前)", max: 4 }, 
-        { name: "210番道路 北 (きりばらいエリア段差途中)", max: 4 },
-        { name: "211番道路 西 (ハクタイ東側テンガン山手前)", max: 2 }, 
-        { name: "211番道路 東 (カンナギ西側広場)", max: 2 },
-        { name: "215番道路 西 (210番合流付近高台)", max: 2 }, 
-        { name: "215番道路 東 (トバリ西ゲート木橋手前)", max: 2 },
-        { name: "214番道路 (トバリ南ゲート草むら横)", max: 4 }, 
-        { name: "213番道路 (レストラン「なみのま」付近)", max: 4 },
-        { name: "212番道路 北 (ポケモン屋敷正門左手前)", max: 4 }, 
-        { name: "212番道路 北東 (ポケモン屋敷池の奥)", max: 2 },
-        { name: "212番道路 南東 (ノモセ西ゲート泥沼手前)", max: 4 }, 
+        { name: "ソノオタウン (フラワーショップ前)", max: 2 },
+        { name: "205番道路 南 (ソノオ〜発電所間)", max: 2 },
+        { name: "205番道路 中央 (橋の東の岩場)", max: 2 },
+        { name: "205番道路 北 (ハクタイの森ショートカット)", max: 4 },
+        { name: "205番道路 北 (ハクタイ側/池の北)", max: 4 },
+        { name: "タタラせいてつじょ (南側)", max: 4 },
+        { name: "206番道路 (サイクリングロード下/いあいぎり)", max: 2 },
+        { name: "206番道路 (サイクリングロード下/南側)", max: 2 },
+        { name: "207番道路 (クロガネ側)", max: 4 },
+        { name: "208番道路 (きのみじいさんの家横)", max: 4 },
+        { name: "209番道路 (ヨスガ東出口付近)", max: 2 },
+        { name: "209番道路 (小川の東/ロストタワー付近)", max: 2 },
+        { name: "ズイタウン (南側)", max: 4 },
+        { name: "210番道路 (ズイ北)", max: 4 },
+        { name: "210番道路 (カンナギ東)", max: 4 },
+        { name: "211番道路 (ハクタイ東)", max: 2 },
+        { name: "211番道路 (カンナギ西)", max: 2 },
+        { name: "212番道路 北 (ポケモン屋敷の左)", max: 2 },
+        { name: "212番道路 中央 (ポケモン屋敷南の池の先)", max: 2 },
+        { name: "212番道路 南 (ノモセ西/泥沼手前)", max: 4 },
+        { name: "213番道路 (ノモセ東)", max: 4 },
+        { name: "214番道路 (トバリ南の池の南)", max: 4 },
+        { name: "215番道路 (中央付近/いあいぎり)", max: 2 },
+        { name: "215番道路 (トバリ西ゲート手前)", max: 2 },
         { name: "218番道路 (ミオ東ゲート陸地)", max: 4 },
-        { name: "216番道路 (テンガン山北側出口雪原)", max: 2 }, 
-        { name: "221番道路 (パルパーク入口手前)", max: 4 },
-        { name: "222番道路 西 (砂浜へ降りる前の北側高台)", max: 2 }, 
-        { name: "222番道路 東 (ナギサ西ゲート民家横)", max: 4 },
-        { name: "225番道路 (ファイトエリア北側民家付近)", max: 4 }, 
-        { name: "226番水道 西 (サバイバルエリア東の草むら)", max: 2 },
-        { name: "226番水道 東 (家のある小島)", max: 2 },
-        { name: "228番道路 (砂嵐エリアのオアシス周辺)", max: 4 },
-        { name: "229番道路 (リゾートエリア東側二股草むら)", max: 4 }
+        { name: "221番道路 (パルパーク手前)", max: 4 },
+        { name: "222番道路 (ナギサ西の高台)", max: 4 },
+        { name: "224番道路 (砂浜の北の高台)", max: 4 },
+        { name: "ファイトエリア (ポケセンの西)", max: 4 },
+        { name: "225番道路 (サバイバルエリア西)", max: 4 },
+        { name: "226番水道 (ロッククライムで登る丘)", max: 4 },
+        { name: "リゾートエリア (別荘の左右)", max: 4 },
+        { name: "228番道路 (南の池の近く)", max: 4 },
+        { name: "229番道路 (リゾートエリアの北)", max: 4 },
+        { name: "230番水道 (ファイトエリア出口の小島)", max: 4 }
     ];
     
     const BERRY_GROUPS = [
@@ -254,17 +255,13 @@
 
         if (tabId === 'main') {
             mainEl.classList.remove('hidden');
-            mainEl.classList.add('grid');
             settingsEl.classList.add('hidden');
-            settingsEl.classList.remove('block');
             
             tabMainBtn.className = "flex-1 py-2 font-bold rounded-lg bg-green-100 text-green-700";
             tabSettingsBtn.className = "flex-1 py-2 font-bold rounded-lg text-gray-500 hover:bg-gray-50";
         } else {
             mainEl.classList.add('hidden');
-            mainEl.classList.remove('grid');
             settingsEl.classList.remove('hidden');
-            settingsEl.classList.add('block');
             
             tabMainBtn.className = "flex-1 py-2 font-bold rounded-lg text-gray-500 hover:bg-gray-50";
             tabSettingsBtn.className = "flex-1 py-2 font-bold rounded-lg bg-green-100 text-green-700";
