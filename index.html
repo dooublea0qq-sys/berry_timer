@@ -8,7 +8,11 @@
     <style>
         body { font-family: sans-serif; background-color: #f0fdf4; color: #1f2937; }
         
-        /* セレクトボックスの矢印を強制復活させ、見た目を整えるCSS */
+        /* タブの切り替え用CSS */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* セレクトボックスの矢印を強制的に表示し、見た目を整えるCSS */
         select {
             -webkit-appearance: menulist !important;
             appearance: menulist !important;
@@ -39,107 +43,109 @@
         <button onclick="switchTab('settings')" id="tab-settings" class="flex-1 py-2 font-bold rounded-lg text-gray-500 hover:bg-gray-50">設定 / データ</button>
     </div>
 
-    <!-- メインコンテンツ (初期表示) -->
-    <div id="content-main" class="grid md:grid-cols-3 gap-6">
-        <div class="md:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-green-100 h-fit">
-            <h2 class="text-lg font-bold text-gray-700 mb-4">🍃 きのみを植える</h2>
-            <div id="berry-form" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">植える場所</label>
-                    <select id="location-select" class="w-full p-2 border border-gray-300 rounded-lg"></select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">種類</label>
-                    <select id="berry-select" class="w-full p-2 border border-gray-300 rounded-lg"></select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">植えた日時</label>
-                    <div class="flex gap-2">
-                        <input type="datetime-local" id="planted-time" class="flex-1 p-2 border border-gray-300 rounded-lg bg-gray-50">
-                        <button type="button" onclick="setInitialTime()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-lg transition-colors whitespace-nowrap">現在時刻</button>
+    <div id="content-main" class="tab-content active">
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="md:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-green-100 h-fit">
+                <h2 class="text-lg font-bold text-gray-700 mb-4">🍃 きのみを植える</h2>
+                <div id="berry-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">植える場所</label>
+                        <select id="location-select" class="w-full p-2 border border-gray-300 rounded-lg"></select>
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">種類</label>
+                        <select id="berry-select" class="w-full p-2 border border-gray-300 rounded-lg"></select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">植えた日時</label>
+                        <div class="flex gap-2">
+                            <input type="datetime-local" id="planted-time" class="flex-1 p-2 border border-gray-300 rounded-lg bg-gray-50">
+                            <button type="button" onclick="setInitialTime()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-lg transition-colors whitespace-nowrap">現在時刻</button>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                        <input type="checkbox" id="use-sukusuku" class="w-4 h-4 text-green-600">
+                        <label for="use-sukusuku" class="text-sm font-medium text-blue-900 cursor-pointer">すくすくこやしを使用 (-25%)</label>
+                    </div>
+                    <button type="button" id="submit-btn" class="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-colors shadow-sm">
+                        記録して通知をセット
+                    </button>
                 </div>
-                <div class="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                    <input type="checkbox" id="use-sukusuku" class="w-4 h-4 text-green-600">
-                    <label for="use-sukusuku" class="text-sm font-medium text-blue-900 cursor-pointer">すくすくこやしを使用 (-25%)</label>
-                </div>
-                <button type="button" id="submit-btn" class="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-colors shadow-sm">
-                    記録して通知をセット
-                </button>
             </div>
-        </div>
 
-        <div class="md:col-span-2 space-y-4">
-            <h2 class="text-lg font-bold text-gray-700" id="list-count">管理中のきのみ (0)</h2>
-            <div id="berry-list" class="space-y-4"></div>
+            <div class="md:col-span-2 space-y-4">
+                <h2 class="text-lg font-bold text-gray-700" id="list-count">管理中のきのみ (0)</h2>
+                <div id="berry-list" class="space-y-4"></div>
+            </div>
         </div>
     </div>
 
-    <!-- 設定コンテンツ (初期非表示) -->
-    <div id="content-settings" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-8">
-        <section class="space-y-4 border-b pb-6">
-            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">🔗 MacroDroid連携設定</h2>
-            <p class="text-sm text-gray-600">MacroDroidで発行したWebhook URLを入力してください。</p>
-            <input type="url" id="webhook-url" placeholder="https://trigger.macrodroid.com/..." class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-400 outline-none">
-            <button onclick="saveWebhook()" class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700">URLを保存</button>
-            <p id="webhook-status" class="text-sm text-green-600 font-bold hidden">保存しました！</p>
-        </section>
+    <div id="content-settings" class="tab-content">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-8">
+            <section class="space-y-4 border-b pb-6">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">🔗 MacroDroid連携設定</h2>
+                <p class="text-sm text-gray-600">MacroDroidで発行したWebhook URLを入力してください。</p>
+                <input type="url" id="webhook-url" placeholder="https://trigger.macrodroid.com/..." class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 focus:ring-2 focus:ring-blue-400 outline-none">
+                <button onclick="saveWebhook()" class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700">URLを保存</button>
+                <p id="webhook-status" class="text-sm text-green-600 font-bold hidden">保存しました！</p>
+            </section>
 
-        <section class="space-y-4 border-b pb-6">
-            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">💾 データのバックアップ</h2>
-            <div class="flex gap-4">
-                <button onclick="exportData()" class="px-6 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700">ファイルに保存(書き出し)</button>
-            </div>
-        </section>
+            <section class="space-y-4 border-b pb-6">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">💾 データのバックアップ</h2>
+                <div class="flex gap-4">
+                    <button onclick="exportData()" class="px-6 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700">ファイルに保存(書き出し)</button>
+                </div>
+            </section>
 
-        <section class="space-y-4">
-            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">📂 データの復元</h2>
-            <input type="file" id="file-input" accept=".json" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-            <button onclick="importData()" class="px-6 py-2 bg-gray-800 text-white font-bold rounded-lg hover:bg-gray-900">ファイルから復元</button>
-        </section>
+            <section class="space-y-4">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">📂 データの復元</h2>
+                <input type="file" id="file-input" accept=".json" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                <button onclick="importData()" class="px-6 py-2 bg-gray-800 text-white font-bold rounded-lg hover:bg-gray-900">ファイルから復元</button>
+            </section>
+        </div>
     </div>
 </div>
 
 <script>
-    // シンオウ地方のふかふかの土 全35箇所（合計118マス）を完全網羅
+    // Wiki情報を完全に反映したロケーションリスト (全35箇所 114マス)
     const LOCATIONS = [
-        { name: "ソノオタウン (フラワーショップ前)", max: 2 },
-        { name: "205番道路 南 (ソノオ〜発電所間)", max: 2 },
-        { name: "205番道路 中央 (橋の東の岩場)", max: 2 },
-        { name: "205番道路 北 (ハクタイの森ショートカット)", max: 4 },
-        { name: "205番道路 北 (ハクタイ側/池の北)", max: 4 },
-        { name: "タタラせいてつじょ (南側)", max: 4 },
-        { name: "206番道路 (サイクリングロード下/いあいぎり)", max: 2 },
-        { name: "206番道路 (サイクリングロード下/南側)", max: 2 },
-        { name: "207番道路 (クロガネ側)", max: 4 },
-        { name: "208番道路 (きのみじいさんの家横)", max: 4 },
-        { name: "209番道路 (ヨスガ東出口付近)", max: 2 },
-        { name: "209番道路 (小川の東/ロストタワー付近)", max: 2 },
-        { name: "ズイタウン (南側)", max: 4 },
-        { name: "210番道路 (ズイ北)", max: 4 },
-        { name: "210番道路 (カンナギ東)", max: 4 },
-        { name: "211番道路 (ハクタイ東)", max: 2 },
-        { name: "211番道路 (カンナギ西)", max: 2 },
-        { name: "212番道路 北 (ポケモン屋敷の左)", max: 2 },
-        { name: "212番道路 中央 (ポケモン屋敷南の池の先)", max: 2 },
-        { name: "212番道路 南 (ノモセ西/泥沼手前)", max: 4 },
-        { name: "213番道路 (ノモセ東)", max: 4 },
-        { name: "214番道路 (トバリ南の池の南)", max: 4 },
-        { name: "215番道路 (中央付近/いあいぎり)", max: 2 },
-        { name: "215番道路 (トバリ西ゲート手前)", max: 2 },
-        { name: "218番道路 (ミオ東ゲート陸地)", max: 4 },
-        { name: "221番道路 (パルパーク手前)", max: 4 },
-        { name: "222番道路 (ナギサ西の高台)", max: 4 },
-        { name: "224番道路 (砂浜の北の高台)", max: 4 },
-        { name: "ファイトエリア (ポケセンの西)", max: 4 },
-        { name: "225番道路 (サバイバルエリア西)", max: 4 },
-        { name: "226番水道 (ロッククライムで登る丘)", max: 4 },
-        { name: "リゾートエリア (別荘の左右)", max: 4 },
-        { name: "228番道路 (南の池の近く)", max: 4 },
-        { name: "229番道路 (リゾートエリアの北)", max: 4 },
-        { name: "230番水道 (ファイトエリア出口の小島)", max: 4 }
+        { name: "205番道路(ソノオ側) - ソノオから出てすぐ", max: 2 },
+        { name: "205番道路(ソノオ側) - 回復してくれる民家近く", max: 2 },
+        { name: "205番道路(ハクタイ側) - ハクタイの森の出口近く", max: 4 },
+        { name: "206番道路 - やまおとこの近く (いあいぎり)", max: 2 },
+        { name: "206番道路 - サイクリングロードを出てすぐ", max: 2 },
+        { name: "207番道路 - 滑る坂を上った先", max: 4 },
+        { name: "208番道路 - きのみじいさんの家の隣", max: 4 },
+        { name: "209番道路 - ふたごちゃんの近くにある橋の先", max: 2 },
+        { name: "209番道路 - 滑る坂、通気口の近く", max: 2 },
+        { name: "210番道路(ズイ側) - 二つ並んだ木の近く", max: 4 },
+        { name: "210番道路(カンナギ側) - ベテラントレーナーの上側(きりばらい)", max: 4 },
+        { name: "211番道路(カンナギ側) - 甘い香りがする木の近く", max: 4 },
+        { name: "212番道路(ノモセ側) - いあいぎりで切れる木の近く", max: 4 },
+        { name: "212番道路(ヨスガ側) - マダム、ジェントルマンの近く", max: 2 },
+        { name: "212番道路(ヨスガ側) - 池の先 (なみのり)", max: 2 },
+        { name: "213番道路 - ノモセシティのゲート付近", max: 4 },
+        { name: "214番道路 - サイキッカーの近く", max: 4 },
+        { name: "215番道路 - 看板近くの木の先 (いあいぎり)", max: 2 },
+        { name: "215番道路 - トバリシティのゲート付近", max: 2 },
+        { name: "218番道路 - 甘い香りがする木の近く", max: 4 },
+        { name: "221番道路 - パルパークの近く", max: 4 },
+        { name: "222番道路 - おとなのおねえさんの近く", max: 4 },
+        { name: "224番道路 - いせきマニアの近く(要かいりき等)", max: 4 },
+        { name: "225番道路 - サバイバルエリアの近く (いあいぎり)", max: 4 },
+        { name: "226番水道 - 岩場の一番上側 (ロッククライム)", max: 4 },
+        { name: "228番道路 - 看板近くの滑る坂を上った先", max: 4 },
+        { name: "229番道路 - 池の近く", max: 4 },
+        { name: "230番水道 - 水場の上側", max: 4 },
+        { name: "ソノオタウン - フラワーショップの入口両脇", max: 2 },
+        { name: "ズイタウン - ショップの横", max: 4 },
+        { name: "ノモセシティ - 技マニアの家の近く", max: 4 },
+        { name: "ファイトエリア - ポケセンの横", max: 4 },
+        { name: "リゾートエリア - べっそうの両脇", max: 4 },
+        { name: "ハクタイのもり - 甘い香りがする木の近く (いあいぎり)", max: 4 },
+        { name: "タタラせいてつじょ - 木に囲まれている場所 (なみのり)", max: 4 }
     ];
-    
+
     const BERRY_GROUPS = [
         { label: "8時間 (水やり 2時間毎)", hours: 8, berries: ["ズリ", "ブリー", "ナナ", "セシナ", "パイル"] },
         { label: "12時間 (水やり 3時間毎)", hours: 12, berries: ["クラボ", "カゴ", "モモン", "チーゴ", "ナナシ"] },
@@ -175,6 +181,7 @@
         }
     }
 
+    // 収穫時間を過ぎたきのみを自動削除
     function cleanupBerries(shouldRender = true) {
         const now = Date.now();
         const initialLength = berries.length;
@@ -199,7 +206,6 @@
         setInitialTime();
         
         cleanupBerries(false);
-        
         renderSelects();
         renderList();
         
@@ -247,24 +253,22 @@
         return new Intl.DateTimeFormat('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(timestamp));
     }
 
+    // フリーズしない安全なタブ切り替え処理
     function switchTab(tabId) {
-        const mainEl = document.getElementById('content-main');
-        const settingsEl = document.getElementById('content-settings');
-        const tabMainBtn = document.getElementById('tab-main');
-        const tabSettingsBtn = document.getElementById('tab-settings');
-
+        // 全てのタブコンテンツを非表示にする
+        document.getElementById('content-main').classList.remove('active');
+        document.getElementById('content-settings').classList.remove('active');
+        
+        // 選ばれたタブだけを表示する
+        document.getElementById(`content-${tabId}`).classList.add('active');
+        
+        // ボタンの見た目を変える
         if (tabId === 'main') {
-            mainEl.classList.remove('hidden');
-            settingsEl.classList.add('hidden');
-            
-            tabMainBtn.className = "flex-1 py-2 font-bold rounded-lg bg-green-100 text-green-700";
-            tabSettingsBtn.className = "flex-1 py-2 font-bold rounded-lg text-gray-500 hover:bg-gray-50";
+            document.getElementById('tab-main').className = "flex-1 py-2 font-bold rounded-lg bg-green-100 text-green-700";
+            document.getElementById('tab-settings').className = "flex-1 py-2 font-bold rounded-lg text-gray-500 hover:bg-gray-50";
         } else {
-            mainEl.classList.add('hidden');
-            settingsEl.classList.remove('hidden');
-            
-            tabMainBtn.className = "flex-1 py-2 font-bold rounded-lg text-gray-500 hover:bg-gray-50";
-            tabSettingsBtn.className = "flex-1 py-2 font-bold rounded-lg bg-green-100 text-green-700";
+            document.getElementById('tab-main').className = "flex-1 py-2 font-bold rounded-lg text-gray-500 hover:bg-gray-50";
+            document.getElementById('tab-settings').className = "flex-1 py-2 font-bold rounded-lg bg-green-100 text-green-700";
         }
     }
 
@@ -344,11 +348,10 @@
 
         setInitialTime();
 
+        // 連続入力対応
         const lastLocation = loc;
         const lastBerry = berryName;
-
         renderSelects();
-
         const locSelect = document.getElementById('location-select');
         const locOption = locSelect.querySelector(`option[value="${lastLocation}"]`);
         if (locOption && !locOption.disabled) {
