@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -427,4 +426,11 @@
                 renderList();
                 alert("復元が完了しました！");
             } catch (err) {
-                alert("ファイルの読み込みに失敗しました。正しい
+                alert("ファイルの読み込みに失敗しました。正しいバックアップファイルか確認してください。");
+            }
+        };
+        reader.readAsText(fileInput.files[0]);
+    }
+</script>
+</body>
+</html>
