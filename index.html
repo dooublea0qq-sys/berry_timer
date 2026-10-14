@@ -1,28 +1,27 @@
+```html
 <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DPPt きのみタイマー</title>
-    <!-- Tailwind CSS をCDNから読み込む -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: sans-serif; background-color: #f0fdf4; color: #1f2937; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* セレクトボックスの矢印を強制的に表示し、見た目を整えるCSS */
+        /* セレクトボックスの矢印を強制復活させ、見た目を整えるCSS */
         select {
-            -webkit-appearance: menulist !important; /* iOS/Safari 向け */
-            appearance: menulist !important; /* 標準的な矢印を表示 */
-            background-image: none !important; /* TailwindのカスタムSVGを無効化 */
-            padding-right: 1.5rem !important; /* 矢印のためのスペースを確保 */
-            background-color: #f9fafb !important; /* Tailwindの bg-gray-50 相当 */
+            -webkit-appearance: menulist !important;
+            appearance: menulist !important;
+            background-image: none !important;
+            padding-right: 1.5rem !important;
+            background-color: #f9fafb !important;
         }
         
-        /* フォーム要素のフォーカス時のアウトライン */
         input:focus, select:focus {
-            outline: 2px solid #4ade80 !important; /* Tailwindの ring-green-400 相当 */
+            outline: 2px solid #4ade80 !important;
             outline-offset: -1px;
         }
     </style>
@@ -140,6 +139,7 @@
         { name: "228番道路 (砂嵐エリアのオアシス周辺)", max: 4 },
         { name: "229番道路 (リゾートエリア東側二股草むら)", max: 4 }
     ];
+    
     const BERRY_GROUPS = [
         { label: "8時間 (水やり 2時間毎)", hours: 8, berries: ["ズリ", "ブリー", "ナナ", "セシナ", "パイル"] },
         { label: "12時間 (水やり 3時間毎)", hours: 12, berries: ["クラボ", "カゴ", "モモン", "チーゴ", "ナナシ"] },
@@ -421,4 +421,10 @@
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
-                berries = JSON.parse(e.target.r
+                berries = JSON.parse(e.target.result);
+                saveData();
+                renderSelects();
+                renderList();
+                alert("復元が完了しました！");
+            } catch (err) {
+                alert("ファイルの読み込みに失敗しました。正しい
