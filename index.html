@@ -148,7 +148,7 @@
 
     let berries = [];
     let webhookUrl = "";
-    let isReplanting = null; // 植え直し中のきのみIDを保持
+    let isReplanting = null;
 
     function loadData() {
         try {
@@ -176,7 +176,6 @@
         renderSelects();
         renderList();
         
-        // 自動消去はせず、UIの更新だけを1分ごとに行う
         setInterval(() => {
             if (!isReplanting) {
                 renderSelects();
@@ -185,7 +184,6 @@
         }, 60000);
     };
 
-    // タブ切り替え（CSSの干渉を防ぐシンプルな仕様）
     function switchTab(tabId) {
         document.getElementById('content-main').style.display = tabId === 'main' ? 'grid' : 'none';
         document.getElementById('content-settings').style.display = tabId === 'settings' ? 'block' : 'none';
@@ -411,7 +409,10 @@
                         <h3 class="text-xl font-bold text-gray-800">${berry.berryName}のみ ${berry.useSukusuku ? '<span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium ml-2">すくすく</span>' : ''}</h3>
                         <p class="text-xs text-gray-400 mt-1">${berry.groupLabel}</p>
                     </div>
-                    ${!isHarvestable ? `<button onclick="deleteBerry('${berry.id}')" class="text-gray-400 hover:text-red-500 p-2 hover:bg-red-50 rounded-lg transition-colors">🗑 削除</button>` : ''}
+                    <div class="flex items-center gap-1">
+                        ${!isHarvestable ? `<button onclick="showReplantForm('${berry.id}')" class="text-green-600 font-bold hover:text-green-700 py-1 px-2 hover:bg-green-50 rounded-lg text-sm transition-colors">🌱 植え直す</button>` : ''}
+                        ${!isHarvestable ? `<button onclick="deleteBerry('${berry.id}')" class="text-gray-400 font-bold hover:text-red-500 py-1 px-2 hover:bg-red-50 rounded-lg text-sm transition-colors">🗑 削除</button>` : ''}
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div class="p-3 rounded-xl border ${now > stage1 ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'}">
