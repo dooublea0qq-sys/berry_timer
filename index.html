@@ -9,7 +9,6 @@
         body { font-family: sans-serif; background-color: #f0fdf4; color: #1f2937; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        /* セレクトボックスの矢印を強制的に表示 */
         select {
             -webkit-appearance: menulist !important;
             appearance: menulist !important;
@@ -24,7 +23,7 @@
         <div class="text-green-600 text-4xl">🌱</div>
         <div>
             <h1 class="text-2xl font-bold text-green-800">DPPt きのみタイマー</h1>
-            <p class="text-sm text-gray-500">MacroDroid連携・バックアップ対応版</p>
+            <p class="text-sm text-gray-500">最強版：保水時間計算・00分まとめ・睡眠防御搭載</p>
         </div>
     </header>
 
@@ -33,7 +32,6 @@
         <button onclick="switchTab('settings')" id="tab-settings" class="flex-1 py-2 font-bold rounded-lg text-gray-500 hover:bg-gray-50 transition-colors">設定 / データ</button>
     </div>
 
-    <!-- タイマー管理タブ -->
     <div id="content-main" class="tab-content active grid md:grid-cols-3 gap-6">
         <div class="md:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-green-100 h-fit">
             <h2 class="text-lg font-bold text-gray-700 mb-4">🍃 新規に植える</h2>
@@ -50,15 +48,15 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">植えた日時</label>
                     <div class="flex gap-2">
                         <input type="datetime-local" id="planted-time" class="flex-1 p-2 border border-gray-300 rounded-lg bg-white">
-                        <button type="button" onclick="setInitialTime()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-lg transition-colors whitespace-nowrap">現在時刻</button>
+                        <button type="button" onclick="setInitialTime()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-lg transition-colors whitespace-nowrap">現在</button>
                     </div>
                 </div>
                 <div class="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-100">
                     <input type="checkbox" id="use-sukusuku" class="w-4 h-4 text-green-600">
-                    <label for="use-sukusuku" class="text-sm font-medium text-blue-900 cursor-pointer">すくすくこやしを使用 (-25%)</label>
+                    <label for="use-sukusuku" class="text-sm font-medium text-blue-900 cursor-pointer">すくすくこやし (-25% 乾き↑)</label>
                 </div>
                 <button type="button" id="submit-btn" class="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition-colors shadow-sm">
-                    記録して通知をセット
+                    計算して通知をセット
                 </button>
             </div>
         </div>
@@ -69,11 +67,10 @@
         </div>
     </div>
 
-    <!-- 設定タブ -->
     <div id="content-settings" class="tab-content bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-8">
         <section class="space-y-4 border-b pb-6">
             <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">🔗 MacroDroid連携設定</h2>
-            <p class="text-sm text-gray-600">MacroDroidで発行したWebhook URLを入力してください。</p>
+            <p class="text-sm text-gray-600">t1～t6, thのパラメータを受け取れるWebhookURL</p>
             <input type="url" id="webhook-url" placeholder="https://trigger.macrodroid.com/..." class="w-full p-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-400 outline-none">
             <button onclick="saveWebhook()" class="px-6 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700">URLを保存</button>
             <p id="webhook-status" class="text-sm text-green-600 font-bold hidden">保存しました！</p>
@@ -81,9 +78,7 @@
 
         <section class="space-y-4 border-b pb-6">
             <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">💾 データのバックアップ</h2>
-            <div class="flex gap-4">
-                <button onclick="exportData()" class="px-6 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700">ファイルに保存(書き出し)</button>
-            </div>
+            <button onclick="exportData()" class="px-6 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700">ファイルに保存(書き出し)</button>
         </section>
 
         <section class="space-y-4">
@@ -96,54 +91,40 @@
 
 <script>
     const LOCATIONS = [
-        { name: "205番道路 (ソノオ側)", max: 2 },
-        { name: "205番道路 (回復してくれる民家近く)", max: 2 },
-        { name: "205番道路 (ハクタイ側)", max: 4 },
-        { name: "206番道路 (やまおとこの近く)", max: 2 },
-        { name: "206番道路 (サイクリングロードを出てすぐ)", max: 2 },
-        { name: "207番道路 (滑る坂を上った先)", max: 4 },
-        { name: "208番道路 (きのみじいさんの家の隣)", max: 4 },
-        { name: "209番道路 (ふたごちゃんの近くにある橋の先)", max: 2 },
-        { name: "209番道路 (滑る坂、通気口の近く)", max: 2 },
-        { name: "210番道路 (ズイ側)", max: 4 },
-        { name: "210番道路 (カンナギ側)", max: 4 },
-        { name: "211番道路 (カンナギ側)", max: 4 },
-        { name: "212番道路 (ノモセ側いあいぎりで切れる木の近く)", max: 4 },
-        { name: "212番道路 (ヨスガ側マダム、ジェントルマンの近く)", max: 2 },
-        { name: "212番道路 (ヨスガ側マダム、ジェントルマン下の池の先)", max: 2 },
-        { name: "213番道路 (ノモセシティのゲート付近)", max: 4 },
-        { name: "214番道路 (サイキッカーの近く)", max: 4 },
-        { name: "215番道路 (看板近くのいあいぎりで切れる木の先)", max: 2 },
-        { name: "215番道路 (トバリシティのゲート付近)", max: 2 },
-        { name: "218番道路 (甘い香りがする木の近く)", max: 4 },
-        { name: "221番道路 (パルパークの近く)", max: 4 },
-        { name: "222番道路 (おとなのおねえさんの近く)", max: 4 },
-        { name: "224番道路 (いせきマニアの近く)", max: 4 },
-        { name: "225番道路 (サバイバルエリアの近く)", max: 4 },
-        { name: "226番水道 (岩場の一番上側)", max: 4 },
-        { name: "228番道路 (看板近くの滑る坂を上った先)", max: 4 },
-        { name: "229番道路 (池の近く)", max: 4 },
-        { name: "230番水道 (水場の上側)", max: 4 },
-        { name: "ソノオタウン (フラワーショップの入口両脇)", max: 2 },
-        { name: "ズイタウン (ショップの横)", max: 4 },
-        { name: "ノモセシティ (技マニアの家の近く)", max: 4 },
-        { name: "ファイトエリア (ポケセンの横)", max: 4 },
-        { name: "リゾートエリア (べっそうの両脇)", max: 4 },
-        { name: "ハクタイのもり (甘い香りがする木の近く)", max: 4 },
+        { name: "205番道路 (ソノオ側)", max: 2 }, { name: "205番道路 (回復してくれる民家近く)", max: 2 },
+        { name: "205番道路 (ハクタイ側)", max: 4 }, { name: "206番道路 (やまおとこの近く)", max: 2 },
+        { name: "206番道路 (サイクリングロードを出てすぐ)", max: 2 }, { name: "207番道路 (滑る坂を上った先)", max: 4 },
+        { name: "208番道路 (きのみじいさんの家の隣)", max: 4 }, { name: "209番道路 (ふたごちゃんの近くにある橋の先)", max: 2 },
+        { name: "209番道路 (滑る坂、通気口の近く)", max: 2 }, { name: "210番道路 (ズイ側)", max: 4 },
+        { name: "210番道路 (カンナギ側)", max: 4 }, { name: "211番道路 (カンナギ側)", max: 4 },
+        { name: "212番道路 (ノモセ側いあいぎりで切れる木の近く)", max: 4 }, { name: "212番道路 (ヨスガ側マダム、ジェントルマンの近く)", max: 2 },
+        { name: "212番道路 (ヨスガ側マダム、ジェントルマン下の池の先)", max: 2 }, { name: "213番道路 (ノモセシティのゲート付近)", max: 4 },
+        { name: "214番道路 (サイキッカーの近く)", max: 4 }, { name: "215番道路 (看板近くのいあいぎりで切れる木の先)", max: 2 },
+        { name: "215番道路 (トバリシティのゲート付近)", max: 2 }, { name: "218番道路 (甘い香りがする木の近く)", max: 4 },
+        { name: "221番道路 (パルパークの近く)", max: 4 }, { name: "222番道路 (おとなのおねえさんの近く)", max: 4 },
+        { name: "224番道路 (いせきマニアの近く)", max: 4 }, { name: "225番道路 (サバイバルエリアの近く)", max: 4 },
+        { name: "226番水道 (岩場の一番上側)", max: 4 }, { name: "228番道路 (看板近くの滑る坂を上った先)", max: 4 },
+        { name: "229番道路 (池の近く)", max: 4 }, { name: "230番水道 (水場の上側)", max: 4 },
+        { name: "ソノオタウン (フラワーショップの入口両脇)", max: 2 }, { name: "ズイタウン (ショップの横)", max: 4 },
+        { name: "ノモセシティ (技マニアの家の近く)", max: 4 }, { name: "ファイトエリア (ポケセンの横)", max: 4 },
+        { name: "リゾートエリア (べっそうの両脇)", max: 4 }, { name: "ハクタイのもり (甘い香りがする木の近く)", max: 4 },
         { name: "タタラせいてつじょ (木に囲まれている場所)", max: 4 }
     ];
 
+    // mNorm: 通常保水時間, mSuku: すくすく時保水時間
     const BERRY_GROUPS = [
-        { label: "8時間 (水やり 2時間毎)", hours: 8, berries: ["ズリ", "ブリー", "ナナ", "セシナ", "パイル"] },
-        { label: "12時間 (水やり 3時間毎)", hours: 12, berries: ["クラボ", "カゴ", "モモン", "チーゴ", "ナナシ"] },
-        { label: "16時間 (水やり 4時間毎)", hours: 16, berries: ["ヒメリ", "オレン", "キー"] },
-        { label: "20時間 (水やり 5時間毎)", hours: 20, berries: ["フィラ", "ウイ", "マゴ", "バンジ", "イア"] },
-        { label: "24時間 (水やり 6時間毎)", hours: 24, berries: ["モコシ", "ゴス", "ラブタ", "ノメル"] },
-        { label: "32時間 (水やり 8時間毎)", hours: 32, berries: ["オボン", "ザロク", "ネコブ", "タポル", "ロメ", "ウブ", "マトマ"] },
-        { label: "48時間 (水やり 12時間毎)", hours: 48, berries: ["ラム"] },
-        { label: "60時間 (水やり 15時間毎)", hours: 60, berries: ["ノワキ", "シーヤ", "カイス", "ドリ", "ベリブ"] },
-        { label: "72時間 (水やり 18時間毎)", hours: 72, berries: ["オッカ", "イトケ", "ソクノ", "リンド", "ヤチェ", "ヨプ", "ビアー", "シュカ", "バコウ", "ウタン", "タンガ", "ヨロギ", "カシブ", "ハバン", "ナモ", "リリバ", "ホズ"] },
-        { label: "96時間 (水やり 24時間毎)", hours: 96, berries: ["チイラ", "リュガ", "カムラ", "ヤタピ", "ズア", "サン", "スター", "ナゾ", "ミクル", "イバン", "ジャポ", "レンブ"] }
+        { label: "8時間 (ズリ等)", hours: 8, mNorm: 3, mSuku: 2, berries: ["ズリ", "ブリー", "ナナ", "セシナ", "パイル"] },
+        { label: "12時間 (クラボ等)", hours: 12, mNorm: 7, mSuku: 4, berries: ["クラボ", "カゴ", "モモン", "チーゴ", "ナナシ"] },
+        { label: "16時間 (ヒメリ等)", hours: 16, mNorm: 7, mSuku: 4, berries: ["ヒメリ", "オレン", "キー"] },
+        { label: "20時間 (フィラ等)", hours: 20, mNorm: 10, mSuku: 5, berries: ["フィラ", "ウイ", "マゴ", "バンジ", "イア"] },
+        { label: "24時間 (モコシ等)", hours: 24, mNorm: 10, mSuku: 5, berries: ["モコシ", "ゴス", "ラブタ", "ノメル"] },
+        { label: "32時間 (オボン)", hours: 32, mNorm: 15, mSuku: 8, berries: ["オボン"] },
+        { label: "32時間 (ザロク等・努力値)", hours: 32, mNorm: 13, mSuku: 7, berries: ["ザロク", "ネコブ", "タポル", "ロメ", "ウブ", "マトマ"] },
+        { label: "48時間 (ラム)", hours: 48, mNorm: 13, mSuku: 7, berries: ["ラム"] },
+        { label: "60時間 (ノワキ等)", hours: 60, mNorm: 13, mSuku: 7, berries: ["ノワキ", "シーヤ", "カイス", "ドリ", "ベリブ"] },
+        { label: "72時間 (半減きのみ)", hours: 72, mNorm: 17, mSuku: 9, berries: ["オッカ", "イトケ", "ソクノ", "リンド", "ヤチェ", "ヨプ", "ビアー", "シュカ", "バコウ", "ウタン", "タンガ", "ヨロギ", "カシブ", "ハバン", "ナモ", "リリバ", "ホズ"] },
+        { label: "96時間 (チイラ等)", hours: 96, mNorm: 25, mSuku: 13, berries: ["チイラ", "リュガ", "カムラ", "ヤタピ", "ズア", "サン", "スター"] },
+        { label: "96時間 (ナゾ等)", hours: 96, mNorm: 15, mSuku: 8, berries: ["ナゾ", "ミクル", "イバン", "ジャポ", "レンブ"] }
     ];
 
     let berries = [];
@@ -154,6 +135,18 @@
         try {
             berries = JSON.parse(localStorage.getItem('dppt_berries')) || [];
             webhookUrl = localStorage.getItem('dppt_webhook') || "";
+            
+            // 古いデータ形式の互換性処理（stageHoursをwaterings配列に変換）
+            berries.forEach(b => {
+                if (!b.waterings) {
+                    b.harvestAt = b.plantedAt + (b.totalHours * 3600000);
+                    b.waterings = [
+                        b.plantedAt + (b.stageHours * 3600000),
+                        b.plantedAt + (b.stageHours * 2 * 3600000),
+                        b.plantedAt + (b.stageHours * 3 * 3600000)
+                    ];
+                }
+            });
         } catch (e) {
             berries = [];
             webhookUrl = "";
@@ -164,9 +157,7 @@
         try {
             localStorage.setItem('dppt_berries', JSON.stringify(berries));
             localStorage.setItem('dppt_webhook', webhookUrl);
-        } catch (e) {
-            console.warn("データ保存エラー", e);
-        }
+        } catch (e) {}
     }
 
     window.onload = () => {
@@ -175,19 +166,12 @@
         setInitialTime();
         renderSelects();
         renderList();
-        
-        setInterval(() => {
-            if (!isReplanting) {
-                renderSelects();
-                renderList();
-            }
-        }, 60000);
+        setInterval(() => { if (!isReplanting) { renderSelects(); renderList(); } }, 60000);
     };
 
     function switchTab(tabId) {
         document.getElementById('content-main').style.display = tabId === 'main' ? 'grid' : 'none';
         document.getElementById('content-settings').style.display = tabId === 'settings' ? 'block' : 'none';
-        
         document.getElementById('tab-main').className = `flex-1 py-2 font-bold rounded-lg transition-colors ${tabId === 'main' ? 'bg-green-100 text-green-700' : 'text-gray-500 hover:bg-gray-50'}`;
         document.getElementById('tab-settings').className = `flex-1 py-2 font-bold rounded-lg transition-colors ${tabId === 'settings' ? 'bg-green-100 text-green-700' : 'text-gray-500 hover:bg-gray-50'}`;
     }
@@ -198,11 +182,52 @@
         document.getElementById('planted-time').value = now.toISOString().slice(0, 16);
     }
 
+    function calculateSchedule(plantedAt, harvestAt, moistureHours) {
+        let waterings = [];
+        let lastWateredTime = plantedAt;
+        let iteration = 0;
+
+        while (iteration < 20) { // 無限ループ防止
+            iteration++;
+            let limitTime = lastWateredTime + (moistureHours * 3600000);
+            if (limitTime >= harvestAt) break; // 次に乾く前に収穫できるなら不要
+
+            let safeTime = limitTime - 3600000; // 1時間の安全マージン確保
+            
+            // 00分まとめ処理（次の1時間に切り上げ）
+            let d = new Date(safeTime);
+            if (d.getMinutes() > 0 || d.getSeconds() > 0 || d.getMilliseconds() > 0) {
+                d.setHours(d.getHours() + 1);
+                d.setMinutes(0, 0, 0);
+            }
+            let scheduledTime = d.getTime();
+
+            // 睡眠防御システム (00:00〜07:59の予定を前日23:00に前倒し)
+            let sd = new Date(scheduledTime);
+            let hour = sd.getHours();
+            if (hour >= 0 && hour < 8) {
+                let adjusted = new Date(scheduledTime);
+                adjusted.setDate(adjusted.getDate() - 1);
+                adjusted.setHours(23, 0, 0, 0);
+                
+                // 前倒しした時間が前回の水やりより未来なら適用 (過去になるなら諦める)
+                if (adjusted.getTime() > lastWateredTime) {
+                    scheduledTime = adjusted.getTime();
+                }
+            }
+
+            if (scheduledTime >= harvestAt) break; // 調整で収穫を過ぎた場合は終了
+
+            waterings.push(scheduledTime);
+            lastWateredTime = scheduledTime; // 土のタイマーをリセット
+        }
+        return waterings;
+    }
+
     function renderSelects() {
         const locSelect = document.getElementById('location-select');
         const currentLoc = locSelect.value;
         locSelect.innerHTML = '';
-        
         LOCATIONS.forEach(loc => {
             const currentCount = berries.filter(b => b.location === loc.name).length;
             const isFull = currentCount >= loc.max;
@@ -213,14 +238,10 @@
             if(isFull) opt.classList.add('text-gray-400');
             locSelect.appendChild(opt);
         });
-        if(currentLoc && !locSelect.querySelector(`option[value="${currentLoc}"]`).disabled) {
-            locSelect.value = currentLoc;
-        }
+        if(currentLoc && !locSelect.querySelector(`option[value="${currentLoc}"]`).disabled) locSelect.value = currentLoc;
 
         const berrySelect = document.getElementById('berry-select');
-        if (berrySelect.options.length === 0) {
-            berrySelect.innerHTML = getBerryOptionsHTML();
-        }
+        if (berrySelect.options.length === 0) berrySelect.innerHTML = getBerryOptionsHTML();
     }
 
     function getBerryOptionsHTML(defaultBerry = "") {
@@ -240,33 +261,35 @@
         return new Intl.DateTimeFormat('ja-JP', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(timestamp));
     }
 
-    function saveWebhook() {
-        webhookUrl = document.getElementById('webhook-url').value;
-        saveData();
-        const status = document.getElementById('webhook-status');
-        status.classList.remove('hidden');
-        setTimeout(() => status.classList.add('hidden'), 3000);
-    }
-
     function sendWebhook(berry) {
         if (!webhookUrl) return;
         const now = Date.now();
-        const stage1_min = Math.round(((berry.plantedAt + (berry.stageHours * 3600000)) - now) / 60000);
-        const stage2_min = Math.round(((berry.plantedAt + (berry.stageHours * 2 * 3600000)) - now) / 60000);
-        const stage3_min = Math.round(((berry.plantedAt + (berry.stageHours * 3 * 3600000)) - now) / 60000);
-        const harvest_min = Math.round(((berry.plantedAt + (berry.totalHours * 3600000)) - now) / 60000);
+        const harvest_min = Math.round((berry.harvestAt - now) / 60000);
         
         const queryParams = new URLSearchParams({
             "location": berry.location,
             "berry": berry.berryName,
-            "t1": stage1_min,
-            "t2": stage2_min,
-            "t3": stage3_min,
             "th": harvest_min
         });
 
+        // t1からt6まで送信。予定がない回は -1 を送る
+        for(let i = 0; i < 6; i++) {
+            if(i < berry.waterings.length) {
+                queryParams.append(`t${i+1}`, Math.round((berry.waterings[i] - now) / 60000));
+            } else {
+                queryParams.append(`t${i+1}`, "-1");
+            }
+        }
+
         const beacon = new Image();
         beacon.src = `${webhookUrl}?${queryParams.toString()}`;
+    }
+
+    function saveWebhook() {
+        webhookUrl = document.getElementById('webhook-url').value;
+        saveData();
+        document.getElementById('webhook-status').classList.remove('hidden');
+        setTimeout(() => document.getElementById('webhook-status').classList.add('hidden'), 3000);
     }
 
     document.getElementById('submit-btn').addEventListener('click', () => {
@@ -279,11 +302,12 @@
         const timeInput = new Date(timeInputRaw).getTime();
 
         let selectedGroup = null;
-        for (const g of BERRY_GROUPS) {
-            if (g.berries.includes(berryName)) selectedGroup = g;
-        }
+        for (const g of BERRY_GROUPS) if (g.berries.includes(berryName)) selectedGroup = g;
 
         const totalHours = useSukusuku ? selectedGroup.hours * 0.75 : selectedGroup.hours;
+        const moistureHours = useSukusuku ? selectedGroup.mSuku : selectedGroup.mNorm;
+        const harvestAt = timeInput + (totalHours * 3600000);
+        
         const newBerry = {
             id: Date.now().toString(),
             location: loc,
@@ -291,15 +315,14 @@
             groupLabel: selectedGroup.label,
             useSukusuku: useSukusuku,
             plantedAt: timeInput,
-            totalHours: totalHours,
-            stageHours: totalHours / 4
+            harvestAt: harvestAt,
+            waterings: calculateSchedule(timeInput, harvestAt, moistureHours)
         };
 
         berries = [newBerry, ...berries];
         saveData();
-        
         if (webhookUrl) sendWebhook(newBerry);
-        else alert("記録しました。\n※設定タブにWebhook URLがないため、通知は送信されません。");
+        else alert("記録しました。\n※Webhook URLがないため、通知は送信されません。");
 
         setInitialTime();
         renderSelects();
@@ -307,7 +330,7 @@
     });
 
     function deleteBerry(id, skipConfirm = false) {
-        if(skipConfirm || confirm("このきのみをリストから削除しますか？\n（MacroDroidのスケジュールはキャンセルされません）")) {
+        if(skipConfirm || confirm("このきのみを削除しますか？\n（MacroDroidの予定はキャンセルされません）")) {
             berries = berries.filter(b => b.id !== id);
             saveData();
             renderSelects();
@@ -315,34 +338,29 @@
         }
     }
 
-    function showReplantForm(id) {
-        isReplanting = id;
-        renderList();
-    }
-
-    function cancelReplant() {
-        isReplanting = null;
-        renderList();
-    }
+    function showReplantForm(id) { isReplanting = id; renderList(); }
+    function cancelReplant() { isReplanting = null; renderList(); }
 
     function executeReplant(id) {
         const berryName = document.getElementById(`replant-berry-${id}`).value;
         const useSukusuku = document.getElementById(`replant-suku-${id}`).checked;
         
         let selectedGroup = null;
-        for (const g of BERRY_GROUPS) {
-            if (g.berries.includes(berryName)) selectedGroup = g;
-        }
+        for (const g of BERRY_GROUPS) if (g.berries.includes(berryName)) selectedGroup = g;
+        
         const totalHours = useSukusuku ? selectedGroup.hours * 0.75 : selectedGroup.hours;
+        const moistureHours = useSukusuku ? selectedGroup.mSuku : selectedGroup.mNorm;
+        const timeInput = Date.now();
+        const harvestAt = timeInput + (totalHours * 3600000);
         
         const index = berries.findIndex(b => b.id === id);
         if(index > -1) {
             berries[index].berryName = berryName;
             berries[index].groupLabel = selectedGroup.label;
             berries[index].useSukusuku = useSukusuku;
-            berries[index].plantedAt = Date.now();
-            berries[index].totalHours = totalHours;
-            berries[index].stageHours = totalHours / 4;
+            berries[index].plantedAt = timeInput;
+            berries[index].harvestAt = harvestAt;
+            berries[index].waterings = calculateSchedule(timeInput, harvestAt, moistureHours);
             
             saveData();
             if(webhookUrl) sendWebhook(berries[index]);
@@ -364,35 +382,24 @@
 
         berries.forEach(berry => {
             const now = Date.now();
-            const stage1 = berry.plantedAt + (berry.stageHours * 3600000);
-            const stage2 = berry.plantedAt + (berry.stageHours * 2 * 3600000);
-            const stage3 = berry.plantedAt + (berry.stageHours * 3 * 3600000);
-            const harvest = berry.plantedAt + (berry.totalHours * 3600000);
-            const isHarvestable = now >= harvest;
+            const isHarvestable = now >= berry.harvestAt;
 
             const div = document.createElement('div');
             div.className = "bg-white p-5 rounded-2xl shadow-sm border border-gray-200 transition-all";
 
-            // 植え直しフォーム表示モード
             if (isReplanting === berry.id) {
                 div.innerHTML = `
                     <div class="bg-green-50 border border-green-300 p-5 rounded-2xl">
                         <h3 class="text-lg font-bold text-green-800 mb-1">🌱 ${berry.location} に植え直す</h3>
-                        <p class="text-sm text-green-700 mb-4">現在の日時で新しくタイマーをセットします。</p>
-                        <div class="space-y-3">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">種類</label>
-                                <select id="replant-berry-${berry.id}" class="w-full p-2 border border-gray-300 rounded-lg bg-white">
-                                    ${getBerryOptionsHTML(berry.berryName)}
-                                </select>
-                            </div>
+                        <div class="space-y-3 mt-4">
+                            <select id="replant-berry-${berry.id}" class="w-full p-2 border border-gray-300 rounded-lg bg-white">${getBerryOptionsHTML(berry.berryName)}</select>
                             <div class="flex items-center gap-2 p-3 bg-white rounded-lg border border-gray-200">
                                 <input type="checkbox" id="replant-suku-${berry.id}" ${berry.useSukusuku ? 'checked' : ''} class="w-4 h-4 text-green-600">
-                                <label for="replant-suku-${berry.id}" class="text-sm font-medium text-gray-700">すくすくこやしを使用 (-25%)</label>
+                                <label for="replant-suku-${berry.id}" class="text-sm font-medium text-gray-700">すくすくこやし (-25%)</label>
                             </div>
-                            <div class="flex gap-2 mt-4">
-                                <button onclick="cancelReplant()" class="flex-1 py-3 bg-gray-300 text-gray-800 font-bold rounded-xl hover:bg-gray-400 transition-colors">キャンセル</button>
-                                <button onclick="executeReplant('${berry.id}')" class="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-colors shadow-sm">植えて通知セット</button>
+                            <div class="flex gap-2">
+                                <button onclick="cancelReplant()" class="flex-1 py-3 bg-gray-300 text-gray-800 font-bold rounded-xl">キャンセル</button>
+                                <button onclick="executeReplant('${berry.id}')" class="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl shadow-sm">植えて通知セット</button>
                             </div>
                         </div>
                     </div>
@@ -401,7 +408,17 @@
                 return;
             }
 
-            // 通常モード
+            let wateringsHtml = '';
+            berry.waterings.forEach((wTime, i) => {
+                const isPast = now > wTime;
+                wateringsHtml += `
+                    <div class="p-3 rounded-xl border flex-1 min-w-[100px] ${isPast ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'}">
+                        <div class="text-xs text-gray-500 mb-1">💧 ${i+1}回目</div>
+                        <div class="font-medium text-sm ${isPast ? 'text-gray-400 line-through' : 'text-blue-900'}">${formatDate(wTime)}</div>
+                    </div>
+                `;
+            });
+
             div.innerHTML = `
                 <div class="flex justify-between items-start mb-4">
                     <div>
@@ -410,34 +427,23 @@
                         <p class="text-xs text-gray-400 mt-1">${berry.groupLabel}</p>
                     </div>
                     <div class="flex items-center gap-1">
-                        ${!isHarvestable ? `<button onclick="showReplantForm('${berry.id}')" class="text-green-600 font-bold hover:text-green-700 py-1 px-2 hover:bg-green-50 rounded-lg text-sm transition-colors">🌱 植え直す</button>` : ''}
-                        ${!isHarvestable ? `<button onclick="deleteBerry('${berry.id}')" class="text-gray-400 font-bold hover:text-red-500 py-1 px-2 hover:bg-red-50 rounded-lg text-sm transition-colors">🗑 削除</button>` : ''}
+                        ${!isHarvestable ? `<button onclick="showReplantForm('${berry.id}')" class="text-green-600 font-bold hover:bg-green-50 py-1 px-2 rounded-lg text-sm">🌱 植え直す</button>` : ''}
+                        ${!isHarvestable ? `<button onclick="deleteBerry('${berry.id}')" class="text-gray-400 font-bold hover:text-red-500 hover:bg-red-50 py-1 px-2 rounded-lg text-sm">🗑 削除</button>` : ''}
                     </div>
                 </div>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div class="p-3 rounded-xl border ${now > stage1 ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'}">
-                        <div class="text-xs text-gray-500 mb-1">💧 1回目</div>
-                        <div class="font-medium text-sm ${now > stage1 ? 'text-gray-400 line-through' : 'text-blue-900'}">${formatDate(stage1)}</div>
-                    </div>
-                    <div class="p-3 rounded-xl border ${now > stage2 ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'}">
-                        <div class="text-xs text-gray-500 mb-1">💧 2回目</div>
-                        <div class="font-medium text-sm ${now > stage2 ? 'text-gray-400 line-through' : 'text-blue-900'}">${formatDate(stage2)}</div>
-                    </div>
-                    <div class="p-3 rounded-xl border ${now > stage3 ? 'bg-gray-50 border-gray-200' : 'bg-blue-50 border-blue-200'}">
-                        <div class="text-xs text-gray-500 mb-1">💧 3回目</div>
-                        <div class="font-medium text-sm ${now > stage3 ? 'text-gray-400 line-through' : 'text-blue-900'}">${formatDate(stage3)}</div>
-                    </div>
-                    <div class="p-3 rounded-xl border ${isHarvestable ? 'bg-green-100 border-green-300' : 'bg-orange-50 border-orange-200'}">
+                <div class="flex flex-wrap gap-3">
+                    ${wateringsHtml}
+                    <div class="p-3 rounded-xl border flex-1 min-w-[100px] ${isHarvestable ? 'bg-green-100 border-green-300' : 'bg-orange-50 border-orange-200'}">
                         <div class="text-xs text-gray-500 mb-1">✨ 収穫</div>
-                        <div class="font-bold text-sm ${isHarvestable ? 'text-green-700' : 'text-orange-800'}">${formatDate(harvest)}</div>
+                        <div class="font-bold text-sm ${isHarvestable ? 'text-green-700' : 'text-orange-800'}">${formatDate(berry.harvestAt)}</div>
                     </div>
                 </div>
                 ${isHarvestable ? `
                     <div class="mt-5 pt-5 border-t border-gray-200">
                         <div class="text-center font-bold text-green-700 mb-3 text-lg">✨ 収穫可能になりました！</div>
                         <div class="flex flex-col sm:flex-row gap-3">
-                            <button onclick="deleteBerry('${berry.id}', true)" class="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors border border-gray-300">🧺 収穫して削除</button>
-                            <button onclick="showReplantForm('${berry.id}')" class="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-colors shadow-sm">🌱 同じ場所に植え直す</button>
+                            <button onclick="deleteBerry('${berry.id}', true)" class="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-xl border border-gray-300">🧺 収穫して削除</button>
+                            <button onclick="showReplantForm('${berry.id}')" class="flex-1 py-3 bg-green-600 text-white font-bold rounded-xl shadow-sm">🌱 同じ場所に植え直す</button>
                         </div>
                     </div>
                 ` : ''}
@@ -447,29 +453,18 @@
     }
 
     function exportData() {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(berries));
         const a = document.createElement('a');
-        a.href = dataStr;
+        a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(berries));
         a.download = `DPPt_berries_backup_${new Date().toISOString().slice(0,10)}.json`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
+        document.body.appendChild(a); a.click(); a.remove();
     }
-
     function importData() {
         const fileInput = document.getElementById('file-input');
         if (!fileInput.files.length) return alert("ファイルを選択してください。");
         const reader = new FileReader();
         reader.onload = (e) => {
-            try {
-                berries = JSON.parse(e.target.result);
-                saveData();
-                renderSelects();
-                renderList();
-                alert("復元が完了しました！");
-            } catch (err) {
-                alert("ファイルの読み込みに失敗しました。正しいバックアップファイルか確認してください。");
-            }
+            try { berries = JSON.parse(e.target.result); saveData(); renderSelects(); renderList(); alert("復元が完了しました！"); }
+            catch (err) { alert("読み込み失敗"); }
         };
         reader.readAsText(fileInput.files[0]);
     }
